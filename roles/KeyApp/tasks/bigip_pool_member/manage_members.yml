@@ -1,0 +1,15 @@
+---
+- name: Manage members in a pool
+  bigip_pool_member:
+    partition: "{{ tenant }}"
+    server: "{{ inventory_hostname }}"
+    user: "{{ username }}"
+    password: "{{ password }}"
+    name: "{{site_prefix}}-{{ item.name }}"
+    pool: "{{ pool }}"
+    port: "{{ port }}"
+    state: "{{ state }}"
+    validate_certs: "false"
+  delegate_to: localhost
+  loop: "{{ node_details }}"
+...

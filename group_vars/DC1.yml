@@ -1,0 +1,8 @@
+---
+#DC1 Group Variables:
+
+site_prefix: DC1
+peer_site_prefix: DC2
+virtual_subnet_prefix: 10.100.0
+peer_virtual_subnet_prefix: 10.200.0
+server_subnet_prefix: 10.100.100

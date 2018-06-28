@@ -1,0 +1,14 @@
+- name: Create GTM Pool Member
+  bigip_gtm_pool_member:
+    server: "{{ inventory_hostname }}"
+    user: "{{ username }}"
+    password: "{{ password }}"
+    virtual_server: "{{ item.key  }}"
+    server_name: "{{ item.value }}"
+    type: "a"
+    pool: "{{ gtm_pool_name }}"
+    validate_certs: "false"
+  delegate_to: localhost
+  with_dict: "{{ gtm_vs_details }}"
+  #- virtual_server: "{{ gtm_vs_name }}"
+

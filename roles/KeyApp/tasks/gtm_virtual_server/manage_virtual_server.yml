@@ -1,0 +1,12 @@
+- name: Create GTM Virtual Server
+  bigip_gtm_virtual_server:
+    server: "{{ inventory_hostname }}"
+    user: "{{ username }}"
+    password: "{{ password }}"
+    name: "{{ gtm_vs_name }}"
+    server_name: "{{ gtm_server_name }}"
+    address: "{{ gtm_vs_server_address }}"
+    validate_certs: "false"
+    monitors: "bigip"
+  delegate_to: localhost
+

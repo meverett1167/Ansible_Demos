@@ -1,0 +1,13 @@
+- name: Create GTM WideIP 
+  bigip_gtm_wide_ip:
+    server: "{{ inventory_hostname }}"
+    user: "{{ username }}"
+    password: "{{ password }}"
+    pool_lb_method: "round-robin"
+    name: "{{ gtm_wide_ip_name }}"
+    type: "a"
+    pools: 
+      - name: "{{ gtm_pool_name }}"
+    validate_certs: "false"
+  delegate_to: localhost
+

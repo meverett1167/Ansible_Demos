@@ -1,0 +1,16 @@
+---
+- name: Add a new node
+  bigip_node:
+    partition: "{{ tenant }}"
+    server: "{{ inventory_hostname }}"
+    user: "{{ username }}"
+    password: "{{ password }}"
+    address: "{{server_subnet_prefix}}.{{ item.ip }}"
+    name: "{{site_prefix}}-{{ item.name }}"
+    validate_certs: "false"
+    state: "{{ state }}"
+    monitors:
+      - "{{ monitor }}"
+  delegate_to: localhost
+  loop: "{{ node_details }}" 
+...

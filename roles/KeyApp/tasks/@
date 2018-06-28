@@ -1,0 +1,14 @@
+---
+- name: Manage the iRule contained in the static file keyapp-1-rewrite.tcl to the LTM module
+  bigip_irule:
+    partition: "{{ tenant }}"
+    name: "{{ name }}"
+    user: "{{ username }}"
+    password: "{{ password }}"
+    server: "{{ inventory_hostname }}"
+    module: "ltm"
+    content: "{{ lookup('file', 'irules/keyapp-1-rewrite.tcl') }}"
+    validate_certs: "false"
+    state: "{{ state }}"
+  delegate_to: localhost
+...

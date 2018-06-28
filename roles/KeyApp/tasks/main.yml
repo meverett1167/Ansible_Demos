@@ -1,0 +1,162 @@
+---
+############
+#Add objects
+############
+- include: bigip_partition/manage_partition.yml
+  when: state == "present"
+
+- debug: 
+    msg: "Nodes = {{ nodes }}, Nodes[0] = {{ nodes[0] }}, Nodes[1] = {{ nodes[1] }}"
+
+- include: bigip_node/manage_node.yml
+  vars:
+          #- node_dest: "{{ server_subnet_prefix }}.11"
+          #- name: "{{ site_prefix }}-KeyServer-1"
+    - node_details: "{{ nodes }}"
+    - monitor: "/Common/icmp"
+  when: state == "present"
+
+- include: bigip_pool/manage_pool.yml
+  vars:
+    - name: "{{ site_prefix }}-{{app_name}}_pool"
+    - monitor: "/Common/http_head_f5"
+  when: state == "present"
+
+- include: bigip_pool_member/manage_members.yml
+  vars:
+          #- node_dest: "{{ site_prefix }}-KeyServer-1"
+    - node_details: "{{ nodes }}"
+    - pool: "{{ site_prefix }}-{{app_name}}_pool"
+    - port: "80"
+  when: state == "present"
+
+- include: bigip_irule/manage_irule.yml
+  vars:
+    - name: "{{app_name}}-rewrite"
+  when: state == "present"
+
+- include: bigip_monitor_http/manage_http_monitor.yml
+  when: state == "present"
+
+- include: bigip_virtual_server/manage_vip.yml
+  vars:
+    - description: "{{site_prefix}}-{{app_name}}_vs"
+    - destination: "{{ virtual_subnet_prefix }}.200"
+    - name: "{{site_prefix}}-{{app_name}}_vs"
+    - pool: "{{site_prefix}}-{{app_name}}_pool"
+    - port: "80"
+    - snat: "Automap"
+    - all_profiles: "http"
+    - all_rules: "{{app_name}}-rewrite" 
+  when: state == "present"
+
+- include: gtm_virtual_server/manage_virtual_server.yml
+  vars:
+    - gtm_vs_name: "{{site_prefix}}-{{app_name}}_gtm_vs"
+    - gtm_server_name: "{{site_prefix}}-bigip"
+    - gtm_vs_server_address: "{{virtual_subnet_prefix}}.200"
+  when: state == "present"
+
+- include: gtm_virtual_server/manage_virtual_server.yml
+  vars:
+    - gtm_vs_name: "{{peer_site_prefix}}-{{app_name}}_gtm_vs"
+    - gtm_server_name: "{{peer_site_prefix}}-bigip"
+    - gtm_vs_server_address: "{{peer_virtual_subnet_prefix}}.200"
+  when: state == "present"
+
+- include: gtm_pool/manage_pool.yml
+  vars:
+    - gtm_pool_name: "{{app_name}}_gtm_pool"
+  when: state == "present"
+
+- include: gtm_pool_member/manage_members.yml
+  vars:
+    - gtm_pool_name: "{{app_name}}_gtm_pool"
+    - gtm_vs_details: {"{{ site_prefix}}-{{app_name}}_gtm_vs": "{{ site_prefix }}-bigip", "{{ peer_site_prefix}}-{{app_name}}_gtm_vs": "{{ peer_site_prefix}}-bigip"}
+  when: state == "present"
+
+- include: gtm_wide_ip/manage_wide_ip.yml
+  vars:
+    - gtm_wide_ip_name: "www.{{app_name}}.test.com"
+    - gtm_pool_name: "{{app_name}}_gtm_pool"
+  when: state == "present"
+
+###############
+#Remove objects
+###############
+- include: bigip_virtual_server/manage_vip.yml
+  vars:
+    - description: "{{site_prefix}}-{{app_name}}_vs"
+    - destination: "10.1.10.200"
+    - name: "{{site_prefix}}-{{app_name}}_vs"
+    - pool: "{{site_prefix}}-{{app_name}}_pool"
+    - port: "80"
+    - snat: "Automap"
+    - all_profiles: "http"
+    - all_rules: ""
+  when: state == "absent"
+
+- include: bigip_irule/manage_irule.yml
+  vars:
+    - name: "{{app_name}}-rewrite"
+  when: state == "absent"
+
+- include: bigip_monitor_http/manage_http_monitor.yml
+  when: state == "absent"
+
+- include: bigip_pool/manage_pool.yml
+  vars:
+    - name: "{{site_prefix}}-{{app_name}}_pool"
+    - monitor: "/Common/http_head_f5"
+  when: state == "absent"
+
+- include: bigip_node/manage_node.yml
+  vars:
+          #- node_dest: "{{ server_subnet_prefix }}.11"
+          #- name: "{{ site_prefix }}-KeyServer-1"
+    - node_details: "{{ nodes }}"
+    - monitor: "/Common/icmp"
+  when: state == "absent"
+
+  #- include: bigip_node/remove_node.yml
+  #vars:
+  #  - name: "{{site_prefix}}-KeyServer-1"
+  #   - monitor: "/Common/icmp"
+  #when: state == "absent"
+
+- include: bigip_partition/manage_partition.yml
+  when: state == "absent"
+
+- include: gtm_virtual_server/manage_virtual_server.yml
+  vars:
+    - gtm_vs_name: "{{site_prefix}}-{{app_name}}_gtm_vs"
+    - gtm_server_name: "{{site_prefix}}-bigip"  
+    - gtm_vs_server_address: "{{virtual_subnet_prefix}}.200"
+  when: state == "absent"
+
+- include: gtm_virtual_server/manage_virtual_server.yml
+  vars:
+    - gtm_vs_name: "{{peer_site_prefix}}-{{app_name}}_gtm_vs"
+    - gtm_server_name: "{{peer_site_prefix}}-bigip"
+    - gtm_vs_server_address: "{{peer_virtual_subnet_prefix}}.200"
+  when: state == "absent"
+
+- include: gtm_pool/manage_pool.yml
+  vars:
+    - gtm_pool_name: "{{app_name}}_gtm_pool"
+  when: state == "absent"
+
+- include: gtm_pool_member/manage_members.yml
+  vars:
+    - gtm_pool_name: "{{app_name}}_gtm_pool"
+    - gtm_vs_details: {"{{ site_prefix}}-{{app_name}}_gtm_vs": "{{ site_prefix }}-bigip", "{{ peer_site_prefix}}-{{app_name}}_gtm_vs": "{{ peer_site_prefix}}-bigip"}
+  when: state == "absent"
+
+
+- include: gtm_wide_ip/manage_wide_ip.yml
+  vars:
+    - gtm_wide_ip_name: "www.{{app_name}}.test.com"
+    - gtm_pool_name: "{{app_name}}_gtm_pool"
+  when: state == "absent"
+...
+

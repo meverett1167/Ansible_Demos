@@ -1,0 +1,12 @@
+- name: Manage  tenant partition
+  bigip_partition:
+    name: "{{ tenant }}"
+    user: "{{ username }}"
+    password: "{{ password }}"
+    validate_certs: "false"
+    server: "{{ inventory_hostname }}"
+    state: "{{ state }}"
+  delegate_to: localhost
+
+...
+

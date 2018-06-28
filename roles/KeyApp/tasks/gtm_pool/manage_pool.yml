@@ -1,0 +1,11 @@
+- name: Create GTM Pool 
+  bigip_gtm_pool:
+    server: "{{ inventory_hostname }}"
+    user: "{{ username }}"
+    password: "{{ password }}"
+    name: "{{ gtm_pool_name }}"
+    type: "a"
+    preferred_lb_method: "round-robin"
+    validate_certs: "false"
+  delegate_to: localhost
+
