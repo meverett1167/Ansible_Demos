@@ -1,0 +1,35 @@
+---
+
+- name: Remove VIP, pool, pool members and nodes
+  hosts: f5-test
+  connection: local
+
+  vars:
+    provider:
+      password: "{{ f5_password }}"
+      server: "{{ ansible_host }}"
+      user: "{{ f5_username }}"
+      validate_certs: "{{ validate_certs }}"
+      server_port: "{{ f5_server_port }}"
+
+  tasks:
+    - name: Destroy a VIP
+      bigip_virtual_server:
+        provider: "{{ provider }}"
+        name: vip-1
+        state: absent
+
+    - name: Destroy a pool
+      bigip_pool:
+        provider: "{{ provider }}"
+        name: web
+        state: absent
+
+    - name: Delete nodes
+      bigip_node:
+        provider: "{{ provider }}"
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - web01
+        - web02

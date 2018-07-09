@@ -1,0 +1,43 @@
+sudo: required
+
+language: python
+
+python:
+  - 2.7
+  - 3.5
+  - 3.6
+
+env:
+  - TOXENV=unit
+  - TOXENV=style
+
+before_install:
+  # NOTE: this is probably not required since you're not trying to pull or
+  # push from a GitHub repo
+  - git config --global user.email "OpenStack_TravisCI@f5.com"
+  - git config --global user.name "Travis F5 Openstack"
+
+install:
+  - travis_retry sudo apt-get update
+  - travis_retry sudo apt-get -y install libffi-dev libssl-dev
+  - travis_retry pip install --upgrade setuptools pip
+  - travis_retry pip install cffi
+  - travis_retry pip install --upgrade -r requirements.test.txt
+
+script:
+  - tox
+
+jobs:
+  include:
+    - stage: test
+      script: make sanity
+      python: 3.6
+      env: TOXENV=sanity
+      if: branch = devel
+
+    - stage: test
+      script:
+        - make docker-test && make docker-deploy
+      python: 3.6
+      env: TOXENV=docs-deploy
+      if: branch = devel

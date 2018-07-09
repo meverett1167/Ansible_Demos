@@ -10,8 +10,6 @@
 
 - include: bigip_node/manage_node.yml
   vars:
-          #- node_dest: "{{ server_subnet_prefix }}.11"
-          #- name: "{{ site_prefix }}-KeyServer-1"
     - node_details: "{{ nodes }}"
     - monitor: "/Common/icmp"
   when: state == "present"
@@ -24,7 +22,6 @@
 
 - include: bigip_pool_member/manage_members.yml
   vars:
-          #- node_dest: "{{ site_prefix }}-KeyServer-1"
     - node_details: "{{ nodes }}"
     - pool: "{{ site_prefix }}-{{app_name}}_pool"
     - port: "80"
@@ -38,11 +35,19 @@
 - include: bigip_monitor_http/manage_http_monitor.yml
   when: state == "present"
 
+- include: bigip_certkey/manage_certkey.yml
+  when: state == "present"
+
+- include: bigip_clientssl/manage_clientssl.yml
+  vars:
+    - cssl_name: "{{ site_prefix }}-{{ app_name }}_cssl"
+  when: state == "present"
+
 - include: bigip_virtual_server/manage_vip.yml
   vars:
-    - description: "{{site_prefix}}-{{app_name}}_vs"
-    - destination: "{{ virtual_subnet_prefix }}.200"
-    - name: "{{site_prefix}}-{{app_name}}_vs"
+    - description: "{{site_prefix}}-{{app_name}}_http_vs"
+    - destination: "{{ virtual_subnet_prefix }}.{{ vs_ip }}"
+    - name: "{{site_prefix}}-{{app_name}}_http_vs"
     - pool: "{{site_prefix}}-{{app_name}}_pool"
     - port: "80"
     - snat: "Automap"
@@ -50,18 +55,30 @@
     - all_rules: "{{app_name}}-rewrite" 
   when: state == "present"
 
+- include: bigip_virtual_server/manage_vip.yml
+  vars:
+    - description: "{{site_prefix}}-{{app_name}}_https_vs"
+    - destination: "{{ virtual_subnet_prefix }}.{{ vs_ip }}"
+    - name: "{{site_prefix}}-{{app_name}}_https_vs"
+    - pool: "{{site_prefix}}-{{app_name}}_pool"
+    - port: "443"
+    - snat: "Automap"
+    - all_profiles: "http" 
+    - all_rules: "{{app_name}}-rewrite" 
+  when: state == "present"
+
 - include: gtm_virtual_server/manage_virtual_server.yml
   vars:
     - gtm_vs_name: "{{site_prefix}}-{{app_name}}_gtm_vs"
     - gtm_server_name: "{{site_prefix}}-bigip"
-    - gtm_vs_server_address: "{{virtual_subnet_prefix}}.200"
+    - gtm_vs_server_address: "{{virtual_subnet_prefix}}.{{ vs_ip }}"
   when: state == "present"
 
 - include: gtm_virtual_server/manage_virtual_server.yml
   vars:
     - gtm_vs_name: "{{peer_site_prefix}}-{{app_name}}_gtm_vs"
     - gtm_server_name: "{{peer_site_prefix}}-bigip"
-    - gtm_vs_server_address: "{{peer_virtual_subnet_prefix}}.200"
+    - gtm_vs_server_address: "{{peer_virtual_subnet_prefix}}.{{ vs_ip }}"
   when: state == "present"
 
 - include: gtm_pool/manage_pool.yml
@@ -81,14 +98,27 @@
     - gtm_pool_name: "{{app_name}}_gtm_pool"
   when: state == "present"
 
+
 ###############
 #Remove objects
 ###############
 - include: bigip_virtual_server/manage_vip.yml
   vars:
-    - description: "{{site_prefix}}-{{app_name}}_vs"
-    - destination: "10.1.10.200"
-    - name: "{{site_prefix}}-{{app_name}}_vs"
+    - description: "{{site_prefix}}-{{app_name}}_http_vs"
+    - destination: "{{ virtual_subnet_prefix }}.{{ vs_ip }}"
+    - name: "{{site_prefix}}-{{app_name}}_http_vs"
+    - pool: "{{site_prefix}}-{{app_name}}_pool"
+    - port: "80"
+    - snat: "Automap"
+    - all_profiles: "http"
+    - all_rules: ""
+  when: state == "absent"
+
+- include: bigip_virtual_server/manage_vip.yml
+  vars:
+    - description: "{{site_prefix}}-{{app_name}}_https_vs"
+    - destination: "{{ virtual_subnet_prefix }}.{{ vs_ip }}"
+    - name: "{{site_prefix}}-{{app_name}}_https_vs"
     - pool: "{{site_prefix}}-{{app_name}}_pool"
     - port: "80"
     - snat: "Automap"
@@ -112,17 +142,17 @@
 
 - include: bigip_node/manage_node.yml
   vars:
-          #- node_dest: "{{ server_subnet_prefix }}.11"
-          #- name: "{{ site_prefix }}-KeyServer-1"
     - node_details: "{{ nodes }}"
     - monitor: "/Common/icmp"
   when: state == "absent"
 
-  #- include: bigip_node/remove_node.yml
-  #vars:
-  #  - name: "{{site_prefix}}-KeyServer-1"
-  #   - monitor: "/Common/icmp"
-  #when: state == "absent"
+- include: bigip_clientssl/manage_clientssl.yml
+  vars:
+    - cssl_name: "{{ site_prefix }}-{{ app_name }}_cssl"
+  when: state == "absent"
+
+- include: bigip_certkey/manage_certkey.yml
+  when: state == "absent"
 
 - include: bigip_partition/manage_partition.yml
   when: state == "absent"
@@ -138,7 +168,7 @@
   vars:
     - gtm_vs_name: "{{peer_site_prefix}}-{{app_name}}_gtm_vs"
     - gtm_server_name: "{{peer_site_prefix}}-bigip"
-    - gtm_vs_server_address: "{{peer_virtual_subnet_prefix}}.200"
+    - gtm_vs_server_address: "{{peer_virtual_subnet_prefix}}.{{ vs_ip }}"
   when: state == "absent"
 
 - include: gtm_pool/manage_pool.yml
@@ -158,5 +188,6 @@
     - gtm_wide_ip_name: "www.{{app_name}}.test.com"
     - gtm_pool_name: "{{app_name}}_gtm_pool"
   when: state == "absent"
+
 ...
 

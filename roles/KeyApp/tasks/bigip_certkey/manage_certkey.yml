@@ -1,0 +1,25 @@
+---
+- name: Add/Remove a SSL Key 
+  bigip_ssl_key:
+    partition: "{{ tenant }}"
+    server: "{{ inventory_hostname }}"
+    user: "{{ username }}"
+    password: "{{ password }}"
+    name: "{{ app_name }}_key"
+    validate_certs: "false"
+    state: "{{ state }}"
+    content: "{{ lookup('file', '../../roles/KeyApp/files/{{ app_name }}/{{ app_name }}.key') }}"
+  delegate_to: localhost
+
+- name: Import SSL Certificate Certificate 
+  bigip_ssl_certificate:
+    partition: "{{ tenant }}"
+    server: "{{ inventory_hostname }}"
+    user: "{{ username }}"
+    password: "{{ password }}"
+    name: "{{ app_name }}_cert"
+    validate_certs: "false"
+    state: "{{ state }}"
+    content: "{{ lookup('file', '../../roles/KeyApp/files/{{ app_name }}/{{ app_name }}.crt') }}"
+  delegate_to: localhost
+...

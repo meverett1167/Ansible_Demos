@@ -1,0 +1,16 @@
+---
+- name: Add/Remove a Client SSL profile 
+  bigip_profile_client_ssl:
+    partition: "{{ tenant }}"
+    server: "{{ inventory_hostname }}"
+    user: "{{ username }}"
+    password: "{{ password }}"
+    name: "{{ cssl_name }}" 
+    validate_certs: "false"
+    state: "{{ state }}"
+    ciphers: "DEFAULT:ECDHE_ECDSA"
+    cert_key_chain:
+      - cert: "{{ app_name }}_cert"
+        key: "{{ app_name }}_key"
+  delegate_to: localhost
+...
